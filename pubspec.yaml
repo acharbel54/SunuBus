@@ -1,0 +1,31 @@
+name: sunu_bus
+description: "SunuBus — suivi en temps réel (simulé) des bus de transport en commun à Dakar."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Gestion d'état réactive, adaptée aux mises à jour temps réel (Timer -> StateNotifier)
+  flutter_riverpod: ^2.5.1
+
+  # Carte interactive basée sur OpenStreetMap (aucune clé API requise)
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+  # Formatage des dates (ex: date d'expiration de l'abonnement)
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
