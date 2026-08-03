@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../data/models/bus.dart';
 import '../../data/models/bus_line.dart';
 import '../../data/models/occupancy_level.dart';
@@ -14,7 +15,7 @@ void showBusDetailSheet(
   showModalBottomSheet(
     context: context,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
     builder: (context) => BusDetailSheet(bus: bus, line: line),
   );
@@ -28,9 +29,11 @@ class BusDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        padding: const EdgeInsets.fromLTRB(24, 14, 24, 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,9 +42,9 @@ class BusDetailSheet extends StatelessWidget {
               child: Container(
                 width: 40,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
+                margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColors.sableBordure,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -49,48 +52,87 @@ class BusDetailSheet extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  radius: 22,
+                  radius: 24,
                   backgroundColor: line.color,
                   child: Text(
                     line.shortCode,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        line.displayName,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
+                      Text(line.displayName, style: textTheme.titleLarge),
+                      const SizedBox(height: 2),
                       Text(
                         'Bus n° ${bus.id.split('-').last}',
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.charbonChaud.withValues(alpha: 0.6),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const Divider(height: 32),
-            _InfoRow(
-              icon: Icons.directions_bus_filled_outlined,
-              label: 'Prochain arrêt',
-              value: bus.nextStopName,
+            const SizedBox(height: 28),
+
+            // Bloc ETA mis en avant : information la plus utile de la fiche.
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              decoration: BoxDecoration(
+                color: AppColors.terracotta.withValues(alpha: 0.09),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Arrivée estimée',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: AppColors.charbonChaud.withValues(alpha: 0.65),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '${bus.etaMinutes}',
+                              style: textTheme.headlineMedium?.copyWith(
+                                color: AppColors.terracotta,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'min · vers ${bus.nextStopName}',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: AppColors.charbonChaud.withValues(alpha: 0.75),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.timer_outlined,
+                    size: 34,
+                    color: AppColors.terracotta.withValues(alpha: 0.45),
+                  ),
+                ],
+              ),
             ),
-            _InfoRow(
-              icon: Icons.timer_outlined,
-              label: 'Arrivée estimée',
-              value: '${bus.etaMinutes} min',
-            ),
+            const SizedBox(height: 8),
             _InfoRow(
               icon: bus.occupancy.icon,
               label: 'Remplissage',
@@ -119,20 +161,21 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade700),
-          const SizedBox(width: 12),
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          Icon(icon, size: 20, color: AppColors.charbonChaud.withValues(alpha: 0.55)),
+          const SizedBox(width: 14),
+          Text(label, style: textTheme.bodyMedium),
           const Spacer(),
           Text(
             value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: valueColor,
-                ),
+            style: textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: valueColor,
+            ),
           ),
         ],
       ),

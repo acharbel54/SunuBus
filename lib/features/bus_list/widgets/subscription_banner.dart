@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../subscription/screens/subscription_screen.dart';
 
 /// Bannière incitant l'utilisateur à s'abonner, affichée en bas du panneau
@@ -10,14 +11,14 @@ class SubscriptionBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF00853F), Color(0xFF00A651)],
+          colors: [AppColors.terracotta, AppColors.ocreProfond],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         children: [
@@ -31,7 +32,7 @@ class SubscriptionBanner extends StatelessWidget {
                   'Suivi illimité dès 100 FCFA/mois',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 2),
+                SizedBox(height: 3),
                 Text(
                   'Alertes d\'arrivée, sans publicité',
                   style: TextStyle(color: Colors.white70, fontSize: 12),
@@ -42,8 +43,9 @@ class SubscriptionBanner extends StatelessWidget {
           TextButton(
             style: TextButton.styleFrom(
               backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF00853F),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              foregroundColor: AppColors.terracotta,
+              minimumSize: const Size(48, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SubscriptionScreen()),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../data/models/payment_method.dart';
 
 /// Carte sélectionnable représentant un moyen de paiement mobile.
@@ -27,7 +28,7 @@ class PaymentMethodCard extends StatelessWidget {
           color: selected ? method.color.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? method.color : Colors.grey.shade300,
+            color: selected ? method.color : AppColors.sableBordure,
             width: selected ? 2 : 1,
           ),
         ),
@@ -46,7 +47,7 @@ class PaymentMethodCard extends StatelessWidget {
             ),
             Icon(
               selected ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: selected ? method.color : Colors.grey.shade400,
+              color: selected ? method.color : AppColors.charbonChaud.withValues(alpha: 0.35),
             ),
           ],
         ),

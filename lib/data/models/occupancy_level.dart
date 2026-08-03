@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 /// Niveau de remplissage estimé d'un bus.
 ///
 /// En l'absence de capteurs physiques (compteurs de passagers), ce niveau
@@ -24,13 +26,13 @@ extension OccupancyLevelX on OccupancyLevel {
   Color get color {
     switch (this) {
       case OccupancyLevel.low:
-        return const Color(0xFF2E7D32); // vert
+        return AppColors.vertBaobab;
       case OccupancyLevel.medium:
-        return const Color(0xFFF9A825); // jaune/orange
+        return AppColors.ocreProfond;
       case OccupancyLevel.high:
-        return const Color(0xFFEF6C00); // orange foncé
+        return AppColors.rouilleAlerte;
       case OccupancyLevel.full:
-        return const Color(0xFFC62828); // rouge
+        return AppColors.briqueSature;
     }
   }
 

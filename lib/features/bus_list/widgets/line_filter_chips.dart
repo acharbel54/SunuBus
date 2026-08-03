@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../data/models/bus_line.dart';
 import '../../../providers/bus_providers.dart';
 
@@ -16,7 +17,7 @@ class LineFilterChips extends ConsumerWidget {
     final selectedLineId = ref.watch(selectedLineFilterProvider);
 
     return SizedBox(
-      height: 38,
+      height: 48,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
@@ -62,12 +63,14 @@ class _FilterChip extends StatelessWidget {
       onSelected: (_) => onTap(),
       selectedColor: color,
       labelStyle: TextStyle(
-        color: selected ? Colors.white : Colors.black87,
-        fontWeight: FontWeight.w600,
-        fontSize: 12,
+        color: selected ? Colors.white : AppColors.charbonChaud,
+        fontWeight: FontWeight.w700,
+        fontSize: 13,
       ),
-      backgroundColor: color.withValues(alpha: 0.08),
-      side: BorderSide(color: color.withValues(alpha: 0.4)),
+      backgroundColor: color.withValues(alpha: 0.1),
+      side: BorderSide(color: color.withValues(alpha: 0.45)),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      materialTapTargetSize: MaterialTapTargetSize.padded,
     );
   }
 }

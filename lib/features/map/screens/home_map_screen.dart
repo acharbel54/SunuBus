@@ -3,11 +3,15 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../data/datasources/dakar_network.dart';
 import '../../../data/models/bus.dart';
 import '../../../providers/bus_providers.dart';
+import '../../../providers/map_providers.dart';
+import '../../../providers/notification_providers.dart';
 import '../../../shared/widgets/bus_detail_sheet.dart';
 import '../../bus_list/widgets/bus_list_panel.dart';
+import '../../schedule/widgets/stop_schedule_sheet.dart';
 import '../../subscription/screens/subscription_screen.dart';
 import '../widgets/bus_marker_icon.dart';
 import '../widgets/stop_marker_icon.dart';
@@ -27,8 +31,32 @@ class _HomeMapScreenState extends ConsumerState<HomeMapScreen> {
 
   static const LatLng _dakarCenter = LatLng(14.735, -17.455);
 
+  /// Bus déjà notifiés pour l'alerte "arrive bientôt", afin de ne pas
+  /// répéter la notification à chaque tick tant que le bus reste proche.
+  final Set<String> _notifiedBuses = {};
+
   void _focusOnBus(Bus bus) {
     _mapController.move(bus.position, 15);
+  }
+
+  void _checkApproachAlerts(List<Bus> buses) {
+    final watchedLineId = ref.read(watchedLineIdProvider);
+    if (watchedLineId == null) return;
+
+    final line = DakarNetwork.lineById(watchedLineId);
+    for (final bus in buses.where((b) => b.lineId == watchedLineId)) {
+      if (bus.etaMinutes <= 3) {
+        if (_notifiedBuses.add(bus.id)) {
+          ref.read(notificationServiceProvider).notifyBusApproaching(
+                lineLabel: line.displayName,
+                stopName: bus.nextStopName,
+                etaMinutes: bus.etaMinutes,
+              );
+        }
+      } else if (bus.etaMinutes > 5) {
+        _notifiedBuses.remove(bus.id);
+      }
+    }
   }
 
   @override
@@ -36,6 +64,9 @@ class _HomeMapScreenState extends ConsumerState<HomeMapScreen> {
     final lines = ref.watch(busLinesProvider);
     final visibleBuses = ref.watch(filteredBusesProvider);
     final totalBusCount = ref.watch(busSimulationProvider).length;
+    final watchedLineId = ref.watch(watchedLineIdProvider);
+
+    ref.listen(busSimulationProvider, (previous, next) => _checkApproachAlerts(next));
 
     return Scaffold(
       body: Stack(
@@ -52,6 +83,7 @@ class _HomeMapScreenState extends ConsumerState<HomeMapScreen> {
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.dakarbus.sunu_bus',
+                tileProvider: ref.watch(mapTileProviderProvider),
               ),
               // Trajets de chaque ligne, dessinés en tant que polylignes.
               PolylineLayer(
@@ -73,16 +105,7 @@ class _HomeMapScreenState extends ConsumerState<HomeMapScreen> {
                       width: 16,
                       height: 16,
                       child: GestureDetector(
-                        onTap: () {
-                          ScaffoldMessenger.of(context)
-                            ..hideCurrentSnackBar()
-                            ..showSnackBar(
-                              SnackBar(
-                                content: Text('Arrêt : ${stop.name}'),
-                                duration: const Duration(seconds: 1),
-                              ),
-                            );
-                        },
+                        onTap: () => showStopScheduleSheet(context, stopName: stop.name),
                         child: const StopMarkerIcon(),
                       ),
                     ),
@@ -94,8 +117,8 @@ class _HomeMapScreenState extends ConsumerState<HomeMapScreen> {
                   for (final bus in visibleBuses)
                     Marker(
                       point: bus.position,
-                      width: 34,
-                      height: 34,
+                      width: 44,
+                      height: 44,
                       child: GestureDetector(
                         onTap: () => showBusDetailSheet(
                           context,
@@ -118,37 +141,33 @@ class _HomeMapScreenState extends ConsumerState<HomeMapScreen> {
                 children: [
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(16),
+                        color: AppColors.sableCarte,
+                        borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            color: AppColors.charbonChaud.withValues(alpha: 0.16),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       child: Row(
                         children: [
                           const _LivePulseDot(),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  'SunuBus',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                ),
+                                Text('SunuBus', style: Theme.of(context).textTheme.titleLarge),
                                 Text(
                                   '$totalBusCount bus actifs en direct',
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: AppColors.charbonChaud.withValues(alpha: 0.6),
+                                      ),
                                 ),
                               ],
                             ),
@@ -156,6 +175,23 @@ class _HomeMapScreenState extends ConsumerState<HomeMapScreen> {
                         ],
                       ),
                     ),
+                  ),
+                  const SizedBox(width: 10),
+                  _HeaderIconButton(
+                    icon: watchedLineId == null ? Icons.notifications_none : Icons.notifications_active,
+                    onTap: () {
+                      final selectedLine = ref.read(selectedLineFilterProvider);
+                      if (selectedLine == null) {
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(const SnackBar(
+                            content: Text('Choisissez une ligne dans la liste pour activer ses alertes.'),
+                          ));
+                        return;
+                      }
+                      ref.read(watchedLineIdProvider.notifier).state =
+                          watchedLineId == selectedLine ? null : selectedLine;
+                    },
                   ),
                   const SizedBox(width: 10),
                   _SubscriptionButton(
@@ -218,7 +254,7 @@ class _LivePulseDotState extends State<_LivePulseDot> with SingleTickerProviderS
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: Tween(begin: 0.35, end: 1.0).animate(_controller),
-      child: const CircleAvatar(radius: 5, backgroundColor: Colors.red),
+      child: const CircleAvatar(radius: 5, backgroundColor: AppColors.briqueSature),
     );
   }
 }
@@ -229,15 +265,26 @@ class _SubscriptionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _HeaderIconButton(icon: Icons.workspace_premium_outlined, onTap: onTap);
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _HeaderIconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
     return Material(
       color: Theme.of(context).colorScheme.primary,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: const Padding(
-          padding: EdgeInsets.all(12),
-          child: Icon(Icons.workspace_premium_outlined, color: Colors.white),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Icon(icon, color: Colors.white),
         ),
       ),
     );

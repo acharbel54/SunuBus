@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../data/datasources/dakar_network.dart';
 import '../../../data/models/bus.dart';
 import '../../../providers/bus_providers.dart';
@@ -32,38 +33,38 @@ class BusListPanel extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        color: AppColors.sableClair,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 16, offset: const Offset(0, -4)),
+          BoxShadow(color: AppColors.charbonChaud.withValues(alpha: 0.22), blurRadius: 20, offset: const Offset(0, -6)),
         ],
       ),
       child: ListView(
         controller: scrollController,
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
         children: [
           Center(
             child: Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 14),
+              margin: const EdgeInsets.only(bottom: 18),
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: AppColors.sableBordure,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SearchStopField(),
-          const SizedBox(height: 12),
-          LineFilterChips(lines: lines),
           const SizedBox(height: 16),
+          LineFilterChips(lines: lines),
+          const SizedBox(height: 22),
 
           if (searchQuery.isNotEmpty) ...[
             Text(
               'Résultats pour « $searchQuery »',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             if (searchResults.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -74,14 +75,14 @@ class BusListPanel extends ConsumerWidget {
               )
             else
               for (final result in searchResults) StopSearchResultTile(result: result),
-            const Divider(height: 32),
+            const Divider(height: 40),
           ],
 
           Text(
             'Bus actifs (${buses.length})',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
           if (buses.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -98,7 +99,7 @@ class BusListPanel extends ConsumerWidget {
                 onTap: () => onBusTap(bus),
               ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           const SubscriptionBanner(),
         ],
       ),

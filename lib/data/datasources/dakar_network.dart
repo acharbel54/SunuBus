@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../models/bus_line.dart';
 import '../models/bus_stop.dart';
 
@@ -21,7 +21,7 @@ class DakarNetwork {
     id: 'ligne-4',
     number: 'Ligne 4',
     operatorName: 'Tata',
-    color: Color(0xFFE65100), // orange
+    color: AppColors.terracotta,
     stops: [
       BusStop(id: 'colobane', name: 'Colobane', position: LatLng(14.7167, -17.4530)),
       BusStop(id: 'hlm', name: 'HLM', position: LatLng(14.6950, -17.4470)),
@@ -40,7 +40,7 @@ class DakarNetwork {
     id: 'ligne-75',
     number: 'Ligne 75',
     operatorName: 'Tata',
-    color: Color(0xFF0277BD), // bleu
+    color: AppColors.bleuAtlantique,
     stops: [
       BusStop(id: 'plateau', name: 'Plateau', position: LatLng(14.6714, -17.4383)),
       BusStop(id: 'petersen', name: 'Petersen', position: LatLng(14.6708, -17.4402)),
@@ -59,7 +59,7 @@ class DakarNetwork {
     id: 'dem-dikk',
     number: 'Dem Dikk',
     operatorName: 'Dem Dikk',
-    color: Color(0xFF2E7D32), // vert
+    color: AppColors.vertBaobab,
     stops: [
       BusStop(id: 'petersen-2', name: 'Petersen', position: LatLng(14.6708, -17.4402)),
       BusStop(id: 'plateau-2', name: 'Plateau', position: LatLng(14.6714, -17.4383)),

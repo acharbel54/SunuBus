@@ -21,6 +21,15 @@ dependencies:
 
   # Formatage des dates (ex: date d'expiration de l'abonnement)
   intl: ^0.19.0
+  google_fonts: ^8.2.0
+  shared_preferences: ^2.5.5
+  crypto: ^3.0.7
+
+  # Géolocalisation réelle de l'appareil (recherche d'itinéraire : "Ma position").
+  geolocator: ^13.0.0
+  # Notifications locales (arrivée de bus proche, rappel de trajet réservé).
+  flutter_local_notifications: ^18.0.0
+  timezone: ^0.10.1
 
 dev_dependencies:
   flutter_test:
