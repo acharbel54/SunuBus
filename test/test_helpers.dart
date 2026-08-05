@@ -73,6 +73,9 @@ class FakeGeolocationService extends GeolocationService {
 /// n'a pas d'implémentation de plateforme dans l'environnement de test.
 class FakeNotificationService extends NotificationService {
   @override
+  bool get isSupported => true;
+
+  @override
   Future<void> init() async {}
 
   @override

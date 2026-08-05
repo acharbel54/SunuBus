@@ -31,6 +31,12 @@ abstract class RoutePlanningApi {
 /// le plus adapté (bus/tram/navette : la ligne dont les arrêts minimisent la
 /// marche ; taxi : trajet direct porte-à-porte).
 class MockRoutePlanningService implements RoutePlanningApi {
+  MockRoutePlanningService({DateTime Function()? now}) : _now = now ?? DateTime.now;
+
+  /// Horloge injectable : les tests peuvent fixer l'heure "maintenant" au
+  /// lieu de dépendre de l'horloge système (déterminisme).
+  final DateTime Function() _now;
+
   @override
   Future<List<Itinerary>> search({
     required LatLng origin,
@@ -43,8 +49,12 @@ class MockRoutePlanningService implements RoutePlanningApi {
     // Latence simulée, pour un retour utilisateur cohérent avec un vrai appel réseau.
     await Future.delayed(const Duration(milliseconds: 450));
 
-    final departureTime = departAt ?? DateTime.now();
+    final departureTime = departAt ?? _now();
     final itineraries = <Itinerary>[];
+
+    // Niveau de confort minimal exigé par l'utilisateur (1 à 5) : les modes
+    // dont le score est inférieur sont écartés de la recherche.
+    final minComfortScore = _minComfortScore(preferences.comfortLevel);
 
     if (preferences.preferredModes.contains(TransportMode.bus)) {
       final it = _buildLineItinerary(
@@ -56,6 +66,8 @@ class MockRoutePlanningService implements RoutePlanningApi {
         destinationLabel: destinationLabel,
         departureTime: departureTime,
         comfortScore: 2,
+        minComfortScore: minComfortScore,
+        maxWalkMinutes: preferences.maxWalkMinutes,
       );
       if (it != null) itineraries.add(it);
     }
@@ -70,6 +82,8 @@ class MockRoutePlanningService implements RoutePlanningApi {
         destinationLabel: destinationLabel,
         departureTime: departureTime,
         comfortScore: 4,
+        minComfortScore: minComfortScore,
+        maxWalkMinutes: preferences.maxWalkMinutes,
       );
       if (it != null) itineraries.add(it);
     }
@@ -84,6 +98,8 @@ class MockRoutePlanningService implements RoutePlanningApi {
         destinationLabel: destinationLabel,
         departureTime: departureTime,
         comfortScore: 3,
+        minComfortScore: minComfortScore,
+        maxWalkMinutes: preferences.maxWalkMinutes,
       );
       if (it != null) itineraries.add(it);
     }
@@ -159,8 +175,16 @@ class MockRoutePlanningService implements RoutePlanningApi {
     required String destinationLabel,
     required DateTime departureTime,
     required int comfortScore,
+    required int minComfortScore,
+    required int maxWalkMinutes,
   }) {
     if (lines.isEmpty) return null;
+    // Contrainte de confort : mode en dessous du niveau demandé -> écarté.
+    if (comfortScore < minComfortScore) return null;
+
+    // Distance de marche maximale tolérée (km), dérivée du budget en minutes
+    // de l'utilisateur (vitesse de marche moyenne).
+    final maxWalkKm = maxWalkMinutes * TransportMode.walk.averageSpeedKmh / 60.0;
 
     BusLine? bestLine;
     BusStop? bestOriginStop;
@@ -170,6 +194,12 @@ class MockRoutePlanningService implements RoutePlanningApi {
     for (final line in lines) {
       final originNearest = MultimodalNetwork.nearest(origin, line.stops);
       final destNearest = MultimodalNetwork.nearest(destination, line.stops);
+
+      // Contrainte de marche max : la ligne n'est candidate que si la marche
+      // totale (aller + retour) reste dans le budget de l'utilisateur.
+      final totalWalkKm = originNearest.value + destNearest.value;
+      if (totalWalkKm > maxWalkKm) continue;
+
       final cost = originNearest.value + destNearest.value;
       if (cost < bestCost) {
         bestCost = cost;
@@ -230,6 +260,20 @@ class MockRoutePlanningService implements RoutePlanningApi {
       totalPriceFcfa: totalPrice,
       comfortScore: comfortScore,
     );
+  }
+
+  /// Score de confort minimal (1 à 5) requis par chaque niveau de préférence.
+  /// `economique` accepte tout, `standard` exige un minimum de confort,
+  /// `confort` n'autorise que les modes les plus confortables (ex: TER, taxi).
+  static int _minComfortScore(ComfortLevel level) {
+    switch (level) {
+      case ComfortLevel.economique:
+        return 1;
+      case ComfortLevel.standard:
+        return 2;
+      case ComfortLevel.confort:
+        return 4;
+    }
   }
 
   List<LatLng> _subPolyline(BusLine line, BusStop from, BusStop to) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
@@ -11,6 +12,22 @@ import 'package:timezone/timezone.dart' as tz;
 class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+
+  /// Plateformes où `flutter_local_notifications` dispose d'un canal natif.
+  /// Sur le web (non supporté), les méthodes se neutralisent sans erreur.
+  bool get isSupported {
+    if (kIsWeb) return false;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        return true;
+      default:
+        return false;
+    }
+  }
 
   static const AndroidNotificationDetails _androidDetails = AndroidNotificationDetails(
     'sunubus_alerts',
@@ -28,6 +45,12 @@ class NotificationService {
 
   Future<void> init() async {
     if (_initialized) return;
+    // Plateforme sans support (ex: web) : on neutralise proprement plutôt
+    // que de laisser les appels de plateforme échouer silencieusement.
+    if (!isSupported) {
+      _initialized = true;
+      return;
+    }
     tz_data.initializeTimeZones();
 
     const settings = InitializationSettings(
@@ -53,6 +76,7 @@ class NotificationService {
     required int etaMinutes,
   }) async {
     await init();
+    if (!isSupported) return;
     await _plugin.show(
       lineLabel.hashCode,
       '$lineLabel arrive bientôt',
@@ -68,8 +92,16 @@ class NotificationService {
     required DateTime scheduledAt,
   }) async {
     await init();
+    if (!isSupported) return;
     final scheduledDate = tz.TZDateTime.from(scheduledAt, tz.local);
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
+
+    // Android 12+ : les alarmes exactes peuvent être désactivées par
+    // l'utilisateur (`canScheduleExactAlarms`). On retombe alors en mode
+    // inexact plutôt que de laisser le rappel échouer silencieusement.
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final canScheduleExact = await android?.canScheduleExactNotifications() ?? false;
 
     await _plugin.zonedSchedule(
       id,
@@ -77,13 +109,16 @@ class NotificationService {
       body,
       scheduledDate,
       _details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: canScheduleExact
+          ? AndroidScheduleMode.exactAllowWhileIdle
+          : AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
   Future<void> notifySosSent(String contactName) async {
     await init();
+    if (!isSupported) return;
     await _plugin.show(
       'sos-$contactName'.hashCode,
       'Alerte envoyée',

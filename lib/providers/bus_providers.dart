@@ -7,11 +7,14 @@ import '../services/bus_simulation_service.dart';
 
 /// Fait tourner la simulation et expose la liste des bus, mise à jour
 /// automatiquement toutes les ~2,5 secondes.
+/// `autoDispose` : le timer est coupé dès que plus personne n'écoute le
+/// provider (ex: écran carte fermé), évitant une simulation en arrière-plan
+/// qui gaspillerait la batterie.
 /// Note : pas besoin d'appeler `service.dispose()` manuellement ici —
 /// `StateNotifierProvider` s'en charge déjà automatiquement (un double
 /// appel provoquerait une erreur "used after dispose").
 final busSimulationProvider =
-    StateNotifierProvider<BusSimulationService, List<Bus>>((ref) {
+    StateNotifierProvider.autoDispose<BusSimulationService, List<Bus>>((ref) {
   final service = BusSimulationService();
   return service;
 });

@@ -44,14 +44,28 @@ class _HomeMapScreenState extends ConsumerState<HomeMapScreen> {
     if (watchedLineId == null) return;
 
     final line = DakarNetwork.lineById(watchedLineId);
+    final notifications = ref.read(notificationServiceProvider);
     for (final bus in buses.where((b) => b.lineId == watchedLineId)) {
       if (bus.etaMinutes <= 3) {
         if (_notifiedBuses.add(bus.id)) {
-          ref.read(notificationServiceProvider).notifyBusApproaching(
-                lineLabel: line.displayName,
-                stopName: bus.nextStopName,
-                etaMinutes: bus.etaMinutes,
-              );
+          if (notifications.isSupported) {
+            notifications.notifyBusApproaching(
+              lineLabel: line.displayName,
+              stopName: bus.nextStopName,
+              etaMinutes: bus.etaMinutes,
+            );
+          } else {
+            // Plateforme sans support (ex: web) : on affiche une alerte
+            // visuelle à la place d'une notification système.
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(
+                content: Text(
+                  '${line.displayName} arrive dans ~${bus.etaMinutes} min à ${bus.nextStopName}.',
+                ),
+                duration: const Duration(seconds: 4),
+              ));
+          }
         }
       } else if (bus.etaMinutes > 5) {
         _notifiedBuses.remove(bus.id);

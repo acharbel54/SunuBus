@@ -14,7 +14,10 @@ flutter test test/features       # uniquement les parcours complets
 flutter analyze                  # analyse statique (0 issue attendu)
 ```
 
-24 tests au total, tous verts sur la dernière vérification.
+39 tests au total, tous verts sur la dernière vérification. Un workflow
+**CI GitHub Actions** (`.github/workflows/ci.yml`) exécute `flutter analyze`
+et `flutter test` automatiquement à chaque push sur `main` et à chaque pull
+request.
 
 ### Pourquoi des doublures de service (`test/test_helpers.dart`)
 
@@ -53,7 +56,9 @@ de temps simulé à la place.
 | Fichier | Vérifie |
 |---|---|
 | `test/widget_test.dart` | Écran de connexion si personne n'est authentifié ; carte + barre de navigation à 4 onglets une fois connecté et abonné |
-| `test/services/route_planning_service_test.dart` | La recherche multimodale renvoie des itinéraires cohérents (durée > 0, arrivée après départ), respecte le filtre de modes des préférences, propose toujours au moins un trajet (taxi en secours), respecte l'heure de départ planifiée |
+| `test/services/bus_simulation_engine_test.dart` | Le moteur de simulation est déterministe (Random seedé, ligne synthétique) : initialise le bon nombre de bus, avance sans sortir des bornes de la ligne, rebrousse chemin aux deux terminus |
+| `test/services/route_planning_service_test.dart` | La recherche multimodale renvoie des itinéraires cohérents (durée > 0, arrivée après départ), respecte le filtre de modes des préférences, propose toujours au moins un trajet (taxi en secours), respecte l'heure de départ planifiée (ou l'horloge injectée), **écarte les modes sous le confort demandé**, **respecte la limite de marche à pied** |
+| `test/services/auth_service_test.dart` | Inscription (numéro normalisé, doublon refusé), connexion (mauvais mot de passe/compte inconnu refusés), déconnexion, session persistée, et **jamais de mot de passe en clair dans le stockage** (sel + hash) |
 | `test/services/schedule_service_test.dart` | Les horaires d'un arrêt sont triés par heure croissante, tous dans le futur, vides pour un arrêt inconnu |
 | `test/services/booking_service_test.dart` | Les réservations persistent et se relisent, isolées par numéro de téléphone |
 | `test/services/preferences_service_test.dart` | Les préférences par défaut puis personnalisées persistent correctement |
@@ -92,7 +97,11 @@ l'application.
    d'horaires officiels (plusieurs lignes si l'arrêt est partagé).
 4. Sélectionner une ligne dans le filtre, taper sur la cloche dans l'en-tête
    : elle devient active. Attendre qu'un bus de cette ligne passe sous 3 min
-   d'ETA → une notification "arrive bientôt" doit apparaître.
+   d'ETA → une notification "arrive bientôt" doit apparaître (sur desktop
+   sans support de notifications, un message s'affiche à l'écran à la place).
+5. Mettre l'application en arrière-plan puis revenir : les bus reprennent
+   leur mouvement (la simulation est mise en pause pendant la mise en
+   arrière-plan, elle reprend au retour au premier plan).
 
 ### Itinéraires
 1. Onglet **Itinéraires** → renseigner un départ (ou taper l'icône
@@ -103,7 +112,10 @@ l'application.
    s'affiche.
 3. Ouvrir les filtres (icône réglages) : décocher un mode de transport,
    changer le confort, ajuster la marche max → vérifier que les résultats
-   changent en conséquence après une nouvelle recherche.
+   changent en conséquence après une nouvelle recherche. Astuce pour bien
+   voir les filtres agir : passez le confort sur "Confort" (le bus doit
+   disparaître des résultats) ou réduisez la marche max à 1-2 minutes
+   (seuls restent les arrêts quasi porte-à-porte, sinon le taxi).
 4. Lancer la recherche : au moins un itinéraire s'affiche (le taxi direct
    est toujours disponible). Trier par prix / durée / confort.
 5. Ouvrir le détail d'un itinéraire : aperçu carte, étapes, prix/durée par
@@ -122,6 +134,9 @@ l'application.
 2. **Préférences de trajet** : les changements de modes/confort/marche faits
    ici doivent se retrouver dans les filtres de l'écran Itinéraires (même
    provider, persistance partagée) — et survivre à un redémarrage de l'app.
+   Ils doivent aussi **modifier les résultats de recherche** (le confort
+   "Confort" exclut le bus, une marche max faible écarte les lignes trop
+   éloignées des points de départ/arrivée).
 3. **Sécurité des trajets** : enregistrer un contact d'urgence. Avec une
    réservation "à venir" en cours, taper "Partager" → un message est copié
    dans le presse-papiers (collez-le n'importe où pour vérifier son
@@ -138,7 +153,7 @@ branchement pour une vraie mise en production :
 
 | Service | Aujourd'hui (simulé) | À brancher en production |
 |---|---|---|
-| `GeolocationService` | déjà réel (capteur GPS de l'appareil, via `geolocator`) | — |
+| `GeolocationService` | capteur GPS réel via `geolocator` ; position simulée (centre de Dakar) sur desktop Linux/Windows | — |
 | `RoutePlanningService` | calcul local (ligne la plus proche + marche) | moteur d'itinéraires (OpenTripPlanner, GTFS-RT, API Directions) |
 | `ScheduleService` | grille générée localement | flux GTFS statique officiel de l'exploitant |
 | `NotificationService` | notifications locales uniquement | notifications push distantes (FCM) pour les alertes en arrière-plan |

@@ -19,14 +19,19 @@ passe) et un abonnement actif sont requis pour y accéder (voir
   sur Dakar.
 - 3 lignes de bus simulées : **Ligne 4** (Colobane → Guédiawaye), **Ligne 75**
   (Plateau → Pikine), **Dem Dikk** (Petersen → Yoff), avec leurs arrêts.
-- `BusSimulationService` : fait avancer chaque bus le long de sa ligne
-  toutes les 2,5 secondes, calcule la position GPS interpolée, le prochain
-  arrêt, l'ETA (minutes) et un niveau de remplissage.
+- `BusSimulationEngine` + `BusSimulationService` : le moteur de simulation
+  (classe pure, testable) fait avancer chaque bus le long de sa ligne toutes
+  les 2,5 secondes — position GPS interpolée, prochain arrêt, ETA (minutes)
+  et niveau de remplissage. Le timer est **mis en pause quand l'app passe en
+  arrière-plan** (cycle de vie observé par `RootShell`) et coupé dès que
+  plus personne n'écoute le provider (`autoDispose`) pour économiser la
+  batterie.
 - Panneau inférieur rétractable : liste des bus actifs, filtre par ligne,
   recherche d'arrêt.
 - Tap sur un arrêt → horaires officiels des prochains passages.
 - Bouton cloche : active une alerte notification quand un bus de la ligne
-  sélectionnée est à moins de 3 minutes.
+  sélectionnée est à moins de 3 minutes (remplacée par un message à l'écran
+  sur les plateformes sans support de notifications).
 
 ### Itinéraires (recherche & planification multimodale)
 - Recherche d'itinéraire origine → destination, avec géolocalisation réelle
@@ -34,6 +39,10 @@ passe) et un abonnement actif sont requis pour y accéder (voir
 - Recherche multimodale : bus, tram (TER), taxi, navette — un itinéraire par
   mode autorisé dans les préférences, un trajet direct en taxi étant
   toujours proposé en secours.
+- **Les préférences de trajet sont réellement appliquées** : le niveau de
+  confort demandé élimine les modes trop basiques (ex: "Confort" n'affiche
+  plus le bus), et le temps de marche maximum écarte les lignes dont les
+  arrêts sont trop éloignés.
 - Comparaison des propositions par prix, durée ou confort.
 - Planification à l'avance (choix d'une date/heure de départ) ou départ
   immédiat.
@@ -53,7 +62,8 @@ passe) et un abonnement actif sont requis pour y accéder (voir
 - Accès à l'abonnement et déconnexion.
 
 ### Abonnement & compte
-- Compte réel (téléphone + mot de passe, hashé) stocké sur l'appareil —
+- Compte réel (téléphone + mot de passe) stocké sur l'appareil : le mot de
+  passe n'est jamais conservé en clair (sel aléatoire + hash SHA-256),
   aucun backend.
 - Écran d'abonnement fictif (100 à 200 FCFA/mois) avec simulation de
   paiement Orange Money / Wave / Free Money (aucune transaction réelle),
@@ -88,7 +98,9 @@ lib/
 │       └── multimodal_network.dart    # Stations taxi, navettes, TER, tarifs/durées
 ├── services/                          # Un service = une responsabilité, testable
 │   │                                   # isolément (voir test/services/)
-│   ├── bus_simulation_service.dart    # Moteur de simulation temps réel des bus
+│   ├── bus_simulation_engine.dart     # Moteur de simulation pur (testable,
+│   │                                   # Random/durée injectables)
+│   ├── bus_simulation_service.dart    # Timer temps réel + état Riverpod
 │   ├── auth_service.dart              # Comptes locaux (SharedPreferences, SHA-256)
 │   ├── subscription_service.dart      # Persistance de l'abonnement
 │   ├── geolocation_service.dart       # Position réelle de l'appareil (geolocator)
@@ -163,6 +175,11 @@ Voir [`TESTING.md`](TESTING.md) pour le détail (tests unitaires des services,
 parcours complets simulant un utilisateur, et un guide de test manuel pour
 vérifier chaque fonctionnalité à la main).
 
+Une **intégration continue (GitHub Actions)** est configurée
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) : `flutter analyze`
+et `flutter test` sont exécutés automatiquement à chaque push sur `main` et
+à chaque pull request.
+
 ## Identifiants du projet
 
 - Nom d'affichage : **SunuBus**
@@ -182,10 +199,13 @@ vérifier chaque fonctionnalité à la main).
   aucun SDK de paiement réel n'est intégré.
 - La géolocalisation (`geolocator`) et les notifications locales
   (`flutter_local_notifications`) nécessitent une implémentation de
-  plateforme mobile (Android/iOS) ; sur desktop Linux, ces appels échouent
-  silencieusement (le bouton "Ma position" affiche un message d'erreur, les
-  notifications ne s'affichent simplement pas). Tester ces deux
-  fonctionnalités sur un appareil ou émulateur Android/iOS.
+  plateforme mobile (Android/iOS) pour fonctionner pleinement. Sur desktop
+  Linux/Windows, où `geolocator` n'a pas de canal natif, le bouton "Ma
+  position" renvoie une **position simulée au centre de Dakar** au lieu
+  d'un échec ; sur les plateformes sans support de notifications (web), une
+  **alerte visuelle (SnackBar)** remplace la notification système. Pour les
+  vraies coordonnées GPS et de vraies notifications, tester sur un appareil
+  ou émulateur Android/iOS.
 - Les modules Itinéraires/Réservations/Sécurité sont entièrement simulés
   (calcul local, aucun serveur) : voir le tableau des points d'intégration
   API dans [`TESTING.md`](TESTING.md#points-dintégration-api-réels) pour ce
