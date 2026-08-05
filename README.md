@@ -180,6 +180,131 @@ Une **intégration continue (GitHub Actions)** est configurée
 et `flutter test` sont exécutés automatiquement à chaque push sur `main` et
 à chaque pull request.
 
+## 🎬 Guide de démonstration (vidéo)
+
+Scénario prêt à filmer pour présenter toute l'application en ~5 minutes.
+Chaque étape précise l'écran à montrer, le geste à faire et un commentaire
+possible pendant la présentation.
+
+### Préparation (avant de filmer)
+
+1. **Lancer sur un émulateur Android ou un appareil** (recommandé pour avoir
+   la géolocalisation et les notifications réelles) :
+   ```bash
+   flutter run
+   ```
+2. **Créer un compte de test** une première fois (ex: `77 000 00 00` /
+   `demo1234`) et le garder connecté, pour éviter de montrer deux fois la
+   création de compte dans la vidéo.
+3. **Faire une réservation à l'avance** (Itinéraires → rechercher → réserver)
+   pour que l'écran Sécurité des trajets ait un trajet « à venir » à
+   partager pendant la démo.
+4. Fermer puis relancer l'app : la session et l'abonnement sont persistés,
+   l'app arrive directement sur la carte.
+
+### Scénario pas à pas
+
+#### 1. Démarrage & connexion (≈ 30 s)
+- Montrer le premier lancement : écran **« Connectez-vous pour suivre vos
+  bus en direct »**.
+- Taper **« Pas encore de compte ? Créer un compte »**, saisir numéro +
+  mot de passe + confirmation, puis **« Créer mon compte »**.
+- Insister sur le sous-titre : *« Votre mot de passe est chiffré, jamais
+  stocké en clair »* (sel + SHA-256 sur l'appareil).
+
+#### 2. Abonnement (≈ 30 s)
+- L'écran **« Abonnement »** bloque l'accès tant qu'il n'est pas actif :
+  montrer la carte tarifaire *« À partir de 100 FCFA / mois »* et les
+  avantages.
+- Choisir **Orange Money** (ou Wave / Free Money), puis **« Payer maintenant
+  · 150 FCFA »** → dialogue *« Paiement via Orange Money en cours... »* →
+  **« Paiement réussi »** avec la date d'expiration.
+- Préciser que c'est une simulation (aucune transaction réelle).
+
+#### 3. Carte — suivi en temps réel (≈ 1 min)
+- La carte s'ouvre centrée sur Dakar : **« N bus actifs en direct »**, des
+  bus animés se déplacent le long des 3 lignes (Ligne 4, Ligne 75, Dem
+  Dikk).
+- Taper sur un **bus** → fiche détail : *« Arrivée estimée »* en minutes +
+  prochain arrêt, et le **Remplissage** (calme / moyennement rempli / plein).
+- Taper sur un **arrêt** → feuille *« Prochains passages (horaires
+  officiels) »*.
+- Relever le panneau inférieur : **recherche d'arrêt** (taper « Yoff »),
+  **filtre par ligne** (ne garder que la Ligne 4), liste *« Bus actifs »*.
+- **Alerte bus proche** : filtrer une ligne, taper la **cloche** dans
+  l'en-tête → elle s'active ; quand un bus passe sous 3 min d'ETA, une
+  notification *« arrive bientôt »* apparaît (sur desktop, un message
+  s'affiche à la place).
+- Optionnel : mettre l'app en arrière-plan puis revenir — les bus
+  reprennent leur mouvement (simulation en pause pendant l'arrière-plan).
+
+#### 4. Itinéraires — planification multimodale (≈ 1 min 30 s)
+- Onglet **Itinéraires** → **« Planifier un trajet »**.
+- Saisir le départ : taper sur le champ, choisir « Colobane » dans les
+  suggestions. Puis la destination : « Guédiawaye ».
+- Taper l'icône **« ma position »** sur le champ départ → la géolocalisation
+  renseigne « Ma position actuelle » (sur desktop, position simulée au
+  centre de Dakar).
+- Basculer **« Plus tard »** → choisir une date/heure (elle s'affiche dans
+  le bouton).
+- Ouvrir **« Filtres (modes, confort, marche) »** : décocher un mode (ex:
+  navette), passer le confort sur **« Confort »**, réduire la marche max à
+  5 min → fermer.
+- **« Rechercher »** → écran **« Itinéraires proposés »** : montrer le tri
+  **« Trier : Prix / Durée / Confort »** et faire varier les résultats.
+- Insister : *les préférences sont réellement appliquées* (le bus disparaît
+  des résultats en niveau « Confort », une marche max faible écarte les
+  lignes trop éloignées — le taxi direct reste toujours proposé en secours).
+
+#### 5. Détail & réservation (≈ 45 s)
+- Ouvrir un itinéraire → **« Détail de l'itinéraire »** : aperçu carte avec
+  tracé (pointillés = marche, traits pleins = transport), étapes
+  *« Plateau → Gare de Dakar · Tram · 12 min · 300 FCFA »*, heure de départ /
+  arrivée et prix total.
+- Taper **« Réserver ce trajet »** → écran **« Réservation confirmée »** :
+  récapitulatif (départ, durée, prix) et interrupteur **« Rappel avant le
+  départ »** (notification 15 min avant). L'activer.
+- **« Voir mes réservations »** → le trajet apparaît en **« À venir »**.
+
+#### 6. Réservations & annulation (≈ 20 s)
+- Onglet **Réservations** : sections **« À venir »** et **« Historique »**.
+- Annuler le trajet (icône ✕) → il bascule en **« Annulé »** dans
+  l'Historique.
+
+#### 7. Profil & sécurité (≈ 45 s)
+- Onglet **Profil** : carte du compte (numéro), accès **« Préférences de
+  trajet »**, **« Sécurité des trajets »**, **« Abonnement »**,
+  **« Déconnexion »**.
+- **Préférences de trajet** : re-ouvrir les filtres depuis le profil —
+  montrer que les réglages sont partagés avec l'écran Itinéraires et
+  persistés (redémarrer l'app et les retrouver).
+- **Sécurité des trajets** : enregistrer un **contact d'urgence** (nom +
+  numéro) → *« Contact d'urgence enregistré »*. Le trajet réservé à l'étape
+  5 est proposé sous **« Partager mon trajet »** → **« Partager »** →
+  *« message copié (simulation) »*. Taper **« Envoyer une alerte SOS »** →
+  confirmer → *« Alerte envoyée (simulation) »*.
+
+#### 8. Déconnexion & reconnexion (≈ 20 s)
+- **« Déconnexion »** → retour à l'écran de connexion.
+- Se reconnecter → l'app revient **directement sur la carte** (session et
+  abonnement persistés).
+
+### Conseils de capture
+
+- **Enregistreur d'écran** : `adb exec-out screenrecord --time-limit 360
+  /dev/stdout` (Android), ou un logiciel de capture desktop en affichant
+  l'émulateur en plein écran.
+- Cadrez un **émulateur en mode portrait**, bordure masquée, pour un rendu
+  propre.
+- Préférez un **émulateur Android** : les notifications et le GPS sont
+  réels ; sur desktop Linux les notifications sont remplacées par des
+  messages à l'écran.
+- **Timing** : comptez ~30 s par étape et respirez entre deux ; la carte
+  étant animée, laissez-la tourner 5 s sans action pour montrer le « en
+  direct ».
+- Préparez un **compte + un trajet réservé à l'avance** (voir Préparation)
+  pour enchaîner sans temps mort.
+
 ## Identifiants du projet
 
 - Nom d'affichage : **SunuBus**
