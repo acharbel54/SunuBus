@@ -115,8 +115,10 @@ class MockRoutePlanningService implements RoutePlanningApi {
     }
 
     // Garantit au moins un résultat (trajet direct en taxi) même si aucune
-    // ligne n'est pertinente pour les modes sélectionnés.
-    if (itineraries.isEmpty) {
+    // ligne n'est pertinente pour les modes sélectionnés — sauf si
+    // l'utilisateur a explicitement exclu le taxi de ses préférences, auquel
+    // cas on respecte ce choix plutôt que de le lui imposer en secours.
+    if (itineraries.isEmpty && preferences.preferredModes.contains(TransportMode.taxi)) {
       itineraries.add(_buildDirectTaxi(
         origin: origin,
         originLabel: originLabel,
@@ -197,10 +199,9 @@ class MockRoutePlanningService implements RoutePlanningApi {
 
       // Contrainte de marche max : la ligne n'est candidate que si la marche
       // totale (aller + retour) reste dans le budget de l'utilisateur.
-      final totalWalkKm = originNearest.value + destNearest.value;
-      if (totalWalkKm > maxWalkKm) continue;
-
       final cost = originNearest.value + destNearest.value;
+      if (cost > maxWalkKm) continue;
+
       if (cost < bestCost) {
         bestCost = cost;
         bestLine = line;

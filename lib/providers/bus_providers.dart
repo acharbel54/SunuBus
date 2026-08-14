@@ -30,7 +30,12 @@ final selectedLineFilterProvider = StateProvider<String?>((ref) => null);
 final stopSearchQueryProvider = StateProvider<String>((ref) => '');
 
 /// Liste des bus filtrée par ligne sélectionnée, triée par ETA croissant.
-final filteredBusesProvider = Provider<List<Bus>>((ref) {
+/// `autoDispose` comme `busSimulationProvider` : sans ça, ce provider ne
+/// serait jamais détruit et garderait indéfiniment un abonnement à
+/// `busSimulationProvider`, empêchant SON `autoDispose` de jamais se
+/// déclencher (le timer de simulation tournerait en continu, y compris
+/// après déconnexion).
+final filteredBusesProvider = Provider.autoDispose<List<Bus>>((ref) {
   final buses = ref.watch(busSimulationProvider);
   final lineFilter = ref.watch(selectedLineFilterProvider);
 

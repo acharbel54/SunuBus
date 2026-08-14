@@ -50,6 +50,10 @@ class _RootShellState extends ConsumerState<RootShell> with WidgetsBindingObserv
       case AppLifecycleState.resumed:
         simulation.resume();
       case AppLifecycleState.inactive:
+        // Interruption brève (panneau de notifications, boîte de dialogue
+        // système, appel entrant) : l'app reste visible, on ne coupe pas la
+        // simulation pour éviter un gel visible de la carte "en direct".
+        break;
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:

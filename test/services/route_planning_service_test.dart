@@ -49,6 +49,26 @@ void main() {
     }
   });
 
+  test('ne force pas le taxi en secours si l\'utilisateur l\'a explicitement exclu', () async {
+    // Confort "Confort" élimine le bus (seul mode autorisé ici, score 2 < 4),
+    // et le taxi est absent de preferredModes : le secours taxi ne doit pas
+    // s'activer, la recherche doit renvoyer une liste vide plutôt que
+    // d'imposer un mode que l'utilisateur a explicitement écarté.
+    final results = await service.search(
+      origin: origin,
+      originLabel: 'Plateau',
+      destination: destination,
+      destinationLabel: 'Guédiawaye',
+      preferences: const TripPreferences(
+        preferredModes: {TransportMode.bus},
+        comfortLevel: ComfortLevel.confort,
+        maxWalkMinutes: 15,
+      ),
+    );
+
+    expect(results, isEmpty);
+  });
+
   test('un trajet direct en taxi est toujours proposé en secours', () async {
     // Aucune ligne bus/tram/navette ne dessert forcément ces deux points,
     // mais le service doit toujours renvoyer au moins un itinéraire.
